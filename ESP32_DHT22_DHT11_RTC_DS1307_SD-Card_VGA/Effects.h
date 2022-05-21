@@ -296,9 +296,6 @@ void getmesg()
         break;
     case 3 :
         textmsg = printTextMesg(rtc.getDate(true));
-        fon++;
-        fon%=4;
-        rtc.SetFont(fon);
         msg = 0;
         break;
     case 4 :
