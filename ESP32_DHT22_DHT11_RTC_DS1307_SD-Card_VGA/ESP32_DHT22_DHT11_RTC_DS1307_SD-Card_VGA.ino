@@ -1,5 +1,6 @@
 // REQUIRES the following Arduino libraries:
 // - Lien vidéo: https://youtu.be/bQL0pm41uJY
+// - Diagram: https://youtu.be/Ezd5nrAYFwA
 // - VGA Library: https://github.com/bitluni/ESP32Lib
 // - Adafruit_GFX Library: https://github.com/adafruit/Adafruit-GFX-Library
 // - DS1307ESP Library: https://github.com/3tawi/DS1307ESP
@@ -314,7 +315,7 @@ void setup() {
     server.on("/restesp", handleRestesp);
     server.begin();
   }
-  dht.setup(2, EspDHT::DHT22);
+  dht.setup(13, EspDHT::DHT22);
   Mode.setModeclock(Ci);
   Mode.start();
   SD.begin(5);
