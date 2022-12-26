@@ -27,6 +27,7 @@ SOFTWARE.
 #ifndef DigitalClock_H
 class DigitalClock : public Play {
 private:
+long hueColor;
 
 public:
     DigitalClock() {
@@ -37,60 +38,17 @@ public:
     }
 
     unsigned int playframe() {
-    vga.clear(0);
-    drawTime();
-    drawDate();
-    effects.drawCanva(0, 0, 500, 55, 15, 260);
+    if (modewi) server.handleClient();
     drawMesg();
-    effects.drawCanva(0, 0, 480, 77, 0, 0);
-    drawTemphu();
+    effects.printCanva(0, 0, 505, 77, 0, 0);
     if ( (millis() - currentTime) > 1000 ) { 
-      rtc.DSread();
+      drawTime();
       flasher = !flasher;
+      hueColor++;
       currentTime = millis();
     }
-    vga.show();
-    return 0;
+        return 0;
     }
-    
-void drawTime() {
-  gfx.setFont(&atawi19x11c);
-  gfx.setTextSize(9);
-  gfx.setTextColor(myCOLOR[rtc.minute%7]);
-  gfx.setCursor(0,90);
-  gfx.print(rtc.getMahmin(flasher));
-  gfx.setTextSize(3);
-  gfx.setTextColor(myCOLOR[rtc.second%7]);
-  gfx.setCursor(455,200);
-  gfx.print(rtc.getSecond());
-}
-  
-void drawTemphu() {
-  gfx.setFont(&atawi19x11c);
-  gfx.setTextSize(4);
-  gfx.setTextColor(myCOLOR[ac]);
-  gfx.setCursor(0,320);
-  gfx.print(Temp);
-  gfx.setTextSize(2);
-  gfx.setTextColor(myCOLOR[4]);
-  gfx.print(" *");
-  gfx.setTextSize(4);
-  gfx.setTextColor(myCOLOR[cc]);
-  gfx.setCursor(270,320);
-  gfx.print(Humi);
-  gfx.setTextColor(myCOLOR[0]);
-  gfx.print(" %");
-  getSyTemp();
-}
-void drawDate()
-{
-    canvasM.fillScreen(0);
-    canvasM.setFont(&atawi11x7g);
-    canvasM.setTextSize(5);
-    canvasM.setCursor(0, 0);
-    canvasM.print(effects.printTextMesg(rtc.getDate()));
-    canvasM.setFont();
-  }
   
 void drawMesg()
 {
@@ -102,23 +60,92 @@ void drawMesg()
     canvasM.print(textmsg);
     canvasM.setFont();
      xps-=sp0;
-     if (xps < -text_length) 
-     { xps = 480;
-     effects.getmesg(); }
+     if (xps < -text_length) { effects.getmesg(); }
   }
-void getSyTemp()
-{
-  int xs=465, ys=40;
-  for(int x=ys; x<ys+111; x+=2) {
-  vga.fillRect(xs+34, x, 3, 1, vga.RGB(0xffffff));
+       
+void drawTime() {
+  drawTimese();
+  if (NewRTCm != rtc.getMinute()) {
+  drawTimehm();
+  drawTemphu();
+  drawDate();
+  effects.printCanva(0, 0, 510, 55, 30, 260);
+  NewRTCm = rtc.getMinute();
+      }
+}
+    
+void drawTimese() {
+  if (flasher) {
+    vga.fillEllipse(230, 145, 8, 10, effects.ColorHue(hueColor*2));
+    vga.fillEllipse(230, 205, 8, 10, effects.ColorHue(hueColor*2));
+   } else {
+     vga.fillEllipse(230, 145, 8, 10, vga.RGB(0));
+     vga.fillEllipse(230, 205, 8, 10, vga.RGB(0));
+   }
+  gfx.setFont(&atawi19x11c);
+  gfx.setTextSize(3);
+  gfx.setTextColor(myCOLOR[rtc.getSecond()%7]);
+  gfx.setCursor(480,200);
+  vga.fillRect(480, 200, 80, 65, vga.RGB(0));
+  gfx.print(rtc.getTime("%S"));
+}
+    
+void drawTimehm() {
+  gfx.setFont(&atawi19x11c);
+  gfx.setTextSize(9);
+  text = Mode24h ? rtc.getTime("%H") : rtc.getTime("%I");
+  gfx.setTextColor(myCOLOR[rtc.getMinute()%7]);
+  vga.fillRect(0, 85, 470, 175, vga.RGB(0));
+  gfx.setCursor(0,90);
+  gfx.print(text);
+  text = rtc.getTime("%M");
+  gfx.setCursor(260, 90);
+  gfx.print(text);
+  gfx.setFont();
+}
+    
+void drawTemphu() {
+   vga.fillRect(0, 320, 560, 80, vga.RGB(0));
+   gfx.setFont(&atawi19x11c);
+   gfx.setTextSize(4);
+   gfx.setTextColor(myCOLOR[ac]);
+   gfx.setCursor(5,320);
+   gfx.print(NewTemp);
+   gfx.setTextSize(2);
+   gfx.setTextColor(myCOLOR[4]);
+   gfx.print(" *");
+   gfx.setTextSize(4);
+   gfx.setTextColor(myCOLOR[cc]);
+   gfx.setCursor(290,320);
+   gfx.print(NewHumi);
+   gfx.setTextColor(myCOLOR[0]);
+   gfx.print(" %");
+   getSyTemp();
   }
- vga.setTextColor(vga.RGB(0xffff00));
+   
+void drawDate() {
+  canvasM.fillScreen(0);
+  canvasM.setFont(&atawi11x7g);
+  canvasM.setTextSize(5);
+  canvasM.setCursor(0, 0);
+  text = effects.getfullDateMesg(fon);
+  canvasM.print(text);
+  canvasM.setFont();
+  }
+  
+void getSyTemp() {
+  vga.fillRect(490, 0, 70, 180, vga.RGB(0));
+  int xs=490, ys=30;
+  for(int y=ys; y<ys+111; y+=2) {
+    vga.fillRect(xs+34, y, 3, 1, vga.RGB(0xffffff));
+    }
+  vga.setTextColor(vga.RGB(0xffff00));
   vga.setFont(Font8x8);
-  for(int x=ys; x<ys+101; x+=20) {
-  vga.fillRect(xs+34, x, 6, 1, vga.RGB(0xff00ff));
-  vga.setCursor(xs+45, x-3);
-  vga.print((ys+100-x)/2);
-  }
+  for(int y=ys; y<ys+101; y+=20) {
+    vga.fillRect(xs+34, y, 6, 1, vga.RGB(0xff00ff));
+    vga.setCursor(xs+45, y-3);
+    vga.print((ys+100-y)/2);
+    }
   vga.circle(xs+25, ys, 8, vga.RGB(0xff00ff));
   vga.circle(xs+25, ys, 7, vga.RGB(0xff00ff));
   vga.circle(xs+25, ys, 6, vga.RGB(0xffffff));
@@ -131,7 +158,7 @@ void getSyTemp()
   vga.fillRect(xs+19, ys, 2, 120, vga.RGB(0xffffff));
   vga.fillRect(xs+30, ys, 2, 120, vga.RGB(0xffffff));
   vga.fillRect(xs+32, ys, 2, 118, vga.RGB(0xff00ff));
-  int tec = map(Temp, 0, 50, ys+100, ys);
+  int tec = map(NewTemp, 0, 50, ys+100, ys);
   int yec = ys+136-tec;
   vga.fillRect(xs+21, ys, 9, 130, vga.RGB(0));
   vga.fillRect(xs+21, tec, 9, yec, vga.RGB(0x0000ff));
