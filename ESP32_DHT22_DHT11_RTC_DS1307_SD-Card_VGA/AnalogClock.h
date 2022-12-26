@@ -25,217 +25,213 @@ SOFTWARE.
 */
 
 #ifndef AnalogClock_H
+#include <fontclock.h>
 class AnalogClock : public Play {
 private:
-#define VGA_WIDTH 530
+#define VGA_WIDTH 560
 #define VGA_HEIGHT 400
-const int CENTRE_X = 320;
+const int CENTRE_X = 340;
 const int CENTRE_Y = (VGA_HEIGHT / 2);
-#define R_H1 80
-#define R_H2 100
+#define R_H1 70
+#define R_H2 90
 #define R_M1  110
 #define R_M2  130
 #define R_S1   130
 #define R_S2   150
+uint8_t Vals;
+uint8_t Valm;
+uint8_t Valh;
 VGA3BitI::Color lineColor1;
 VGA3BitI::Color lineColor2;
 VGA3BitI::Color lineColor3;
-int x, x1, x2, x4;
-int y, y1, y2, y3, y4, y5, y6;
+int y0, y1, y2, y3;
 long hueva;
+float lasthour;
+float lastminute;
+float lastsecond;
 
 public:
-    AnalogClock() {
+  AnalogClock() {
         name = (char *)"AnalogClock";
-    }
+  }
 
-    unsigned int playframe() {
-    vga.clear(0);
-    drawTempHumi();
-    getSyTemp();
-    drawDate();
-    drawTime();
-    if ( (millis() - currentTime) > 1000 ) { 
-      rtc.DSread();
-    lineColor1 = effects.ColorHue(random(0, 1791));
-    lineColor2 = effects.ColorHue(random(0, 1791));
-    lineColor3 = effects.ColorHue(hueva);
-    flasher = !flasher;
-    currentTime = millis();
-    hueva++;
+  unsigned int playframe() {
+    if (modewi) server.handleClient();
+    if ( (millis() - currentTime) > 1000 ) {
+      drawTime();
+      drawSed();
+      flasher = !flasher;
+      currentTime = millis();
     }
-    vga.show();
+    if (NewRTCm != Valm) {
+      effects.redtemphumi();
+      drawTempHumi();
+      getSyTemp();
+      drawTime1();
+      vga.fillRect(246, y0, 194, 76, vga.RGB(0));
+      drawTime();
+      NewRTCm = Valm;
+    }
     return 0;
     }
+
+    void drawHMS(float angle, int r1, int r2, uint16_t c1, int z1, int z2) {
+      int x[6];
+      int y[6];
+      float radians = radians(angle);
+      x[0] = CENTRE_X + r2 * sin(radians);
+      y[0] = CENTRE_Y + r2 * cos(radians);
+      radians = radians(angle+z1);
+      x[1] = CENTRE_X + r1 * sin(radians);
+      y[1] = CENTRE_Y + r1 * cos(radians);
+      radians = radians(angle-z1);
+      x[2] = CENTRE_X + r1 * sin(radians);
+      y[2] = CENTRE_Y + r1 * cos(radians);
+      radians = radians(angle+z2);
+      x[3] = CENTRE_X + 10 * sin(radians);
+      y[3] = CENTRE_Y + 10 * cos(radians);
+      radians = radians(angle-z2);
+      x[4] = CENTRE_X + 10 * sin(radians);
+      y[4] = CENTRE_Y + 10 * cos(radians);
+      gfx.fillTriangle(x[0], y[0], x[1], y[1], x[2], y[2], c1);
+      gfx.fillTriangle(x[0], y[0], x[3], y[3], x[4], y[4], c1);
+    }
+
+    void updatetime() {
+      effects.redtemphumi();
+      Valh = rtc.getHour();
+      if (Valh < 3 || Valh > 8) { y0 = 250; }
+      else { y0 = 90; }
+      if (rtc.getHour(true) >= 12) {
+        y1 = 10, y2 = 345;
+      }  else {
+        y1 = 350, y2 = 5;
+      }
+      drawTempHumi();
+      getSyTemp();
+      drawTime1();
+      vga.fillRect(246, y0, 194, 78, vga.RGB(0));
+    }
+
+    void drawTime() {
+      Vals = rtc.getSecond();
+      Valm = rtc.getMinute();
+      if (NewRTCm != Valm) {
+        updatetime();
+        NewRTCm = Valm;
+      }
+      if (lasthour != 180 - (30 * Valh) - (Valm / 2)) drawHMS(lasthour, R_H1, R_H2, 0x0, 4, 40);
+      if (lastminute != 180 - (6 * Valm)) drawHMS(lastminute, R_M1, R_M2, 0x0, 4, 40);
+      drawHMS(lastsecond, R_S1, R_S2, 0x0, 2, 30);
+      drawdigi();
+      float angle = 180 - (30 * Valh) - (Valm / 2);
+      drawHMS(angle, R_H1, R_H2, 0xF800, 4, 40);
+      lasthour = angle;
+      angle = 180 - (6 * Valm);
+      drawHMS(angle, R_M1, R_M2, 0x0F0F, 3, 30);
+      lastminute = angle;
+      angle =  180 - (Vals * 6);
+      drawHMS(angle, R_S1, R_S2, myCOLOR[Vals%7], 2, 30);
+      lastsecond = angle;
+      float radians = radians(angle+90);
+      int x = round(CENTRE_X + 210 * cos(radians));
+      int y = round(CENTRE_Y - 191 * sin(radians));
+      gfx.fillCircle(x,y, 3, myCOLOR[random(0, 6)]);
+      gfx.fillCircle(CENTRE_X,CENTRE_Y, 10, myCOLOR[random(0, 6)]);
+    }
     
-void drawTime()
-{
-            double radians;
-            int j = 0;
-            uint8_t hour = rtc.hour;
-            if (hour > 12)
-                hour -= 12;
-            if (hour < 3 || hour > 8) { 
-              y3 = 250;
-              y4 = 10, x4 = 465;
-              y6 = 120; }
-            else { 
-              y3 = 90;
-              y4 = 350, x4 = 465;
-              y6 = 240; }
-            vga.circle(CENTRE_X,CENTRE_Y, 199, lineColor3);
-            vga.circle(CENTRE_X,CENTRE_Y, 184, lineColor3);
-            for (int i = 0; i < 60; i+=5) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
-            x = round(CENTRE_X + 191 * cos(radians));
-            y = round(CENTRE_Y - 191 * sin(radians));
-            vga.fillCircle(x,y, 5, lineColor1);
-            x = round(CENTRE_X + 170 * cos(radians));
-            y = round(CENTRE_Y - 170 * sin(radians));
-            gfx.setFont(&fontclock);
-            gfx.setTextSize(4);
-            gfx.setTextColor(myCOLOR[(rtc.minute+(i/5))%7]);
-            // gfx.setTextColor(myCOLOR[(i/5)%12]);
-            gfx.setCursor(x,y);
-            gfx.print(char(j));
-            j++;
-            if (j == 10) { j = 11;}
-            }
-            for (int i = 0; i < 60; i+=15) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
-            x = round(CENTRE_X + 191 * cos(radians));
-            y = round(CENTRE_Y - 191 * sin(radians));
-            vga.fillCircle(x,y, 6, lineColor2);
-            }
-            for (int i = 0; i < 60; i++) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
-            x = round(CENTRE_X + 191 * cos(radians));
-            y = round(CENTRE_Y - 191 * sin(radians));
-            vga.fillCircle(x,y, 3, effects.ColorHue((rtc.second+i)*15));
-            }
-
-            gfx.setFont(&atawi19x11c);
-            gfx.setTextSize(3);
-            gfx.setTextColor(myCOLOR[rtc.minute%7]);
-            gfx.setCursor(245,y3);
-            gfx.print(rtc.getMahmin(flasher));
-            gfx.setFont(&atawi11x7g);
-            gfx.setTextSize(2);
-            gfx.setCursor(226,y3+55);
-            gfx.setTextColor(myCOLOR[(rtc.minute+5)%7]);
-            gfx.print(effects.printTextMesg(rtc.getDate()));
-            gfx.setFont();
-            drawMesg();
-            effects.drawCanva(0, 0, 300, 34, 170, y6);
-            
-            // hour
-            radians = (90.0F - ((hour * 30.0F) + ((rtc.minute * 29.0F) / 60.0F))) * M_PI / 180.0F;
-            x = round(CENTRE_X + R_H1 * cos(radians));
-            y = round(CENTRE_Y - R_H1 * sin(radians));
-            x2 = round(CENTRE_X + R_H2 * cos(radians));
-            y2 = round(CENTRE_Y - R_H2 * sin(radians));
-            for (float i = hour-2; i < hour+2; i+=0.2F) {
-            radians = (90.0F - ((i * 30.0F) + ((rtc.minute * 29.0F) / 60.0F))) * M_PI / 180.0F;
-            x1 = round(CENTRE_X + 5 * cos(radians));
-            y1 = round(CENTRE_Y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, vga.RGB(255,0,0));
-            }
-            for (float i = hour-2; i < hour+2; i+=0.2F) {
-            radians = (90.0F - ((i * 30.0F) + ((rtc.minute * 29.0F) / 60.0F))) * M_PI / 180.0F;
-            x1 = round(x + 5 * cos(radians));
-            y1 = round(y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, vga.RGB(255,0,0));
-            }
-
-            // minute
-            radians = (90.0F - (rtc.minute * 6.0F)) * M_PI / 180.0;
-            x = round(CENTRE_X + R_M1 * cos(radians));
-            y = round(CENTRE_Y - R_M1 * sin(radians));
-            x2 = round(CENTRE_X + R_M2 * cos(radians));
-            y2 = round(CENTRE_Y - R_M2 * sin(radians));
-            for (int i = rtc.minute-10; i < rtc.minute+10; i++) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0F;
-            x1 = round(CENTRE_X + 5 * cos(radians));
-            y1 = round(CENTRE_Y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, vga.RGB(0,255,0));
-            }
-            for (int i = rtc.minute-10; i < rtc.minute+10; i++) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0F;
-            x1 = round(x + 5 * cos(radians));
-            y1 = round(y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, vga.RGB(0,255,0));
-            }
-
-            // second
-            radians = (90.0F - (rtc.second * 6.0F)) * M_PI / 180.0F;
-            x = round(CENTRE_X + R_S1 * cos(radians));
-            y = round(CENTRE_Y - R_S1 * sin(radians));
-            x2 = round(CENTRE_X + R_S2 * cos(radians));
-            y2 = round(CENTRE_Y - R_S2 * sin(radians));
-            for (int i = rtc.second-10; i < rtc.second+10; i++) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0F;
-            x1 = round(CENTRE_X + 5 * cos(radians));
-            y1 = round(CENTRE_Y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, lineColor1);
-            }
-            for (int i = rtc.second-10; i < rtc.second+10; i++) {
-            radians = (90.0F - (i * 6.0F)) * M_PI / 180.0F;
-            x1 = round(x + 5 * cos(radians));
-            y1 = round(y - 5 * sin(radians));
-            vga.line(x1, y1, x2, y2, lineColor1);
-            }
-            vga.fillCircle(CENTRE_X,CENTRE_Y, 10, lineColor1);
+void drawTime1() {
+  double radians;
+  int j = 0, x, y;
+  vga.ellipse(CENTRE_X,CENTRE_Y, 220, 199, myCOLOR[Valm%7]);
+  vga.ellipse(CENTRE_X,CENTRE_Y, 205, 184, myCOLOR[Valm%7]);
+  for (int i = 0; i < 60; i+=5) {
+    radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
+    x = round(CENTRE_X + 210 * cos(radians));
+    y = round(CENTRE_Y - 191 * sin(radians));
+    gfx.fillCircle(x,y, 6, myCOLOR[Valm%7]);
+    x = round(CENTRE_X + 190 * cos(radians));
+    y = round(CENTRE_Y - 170 * sin(radians));
+    gfx.setFont(&fontclock);
+    gfx.setTextSize(4);
+    gfx.setTextColor(myCOLOR[(Valm+(i/5))%7]);
+    // gfx.setTextColor(myCOLOR[(i/5)%12]);
+    gfx.setCursor(x,y);
+    gfx.print(char(j));
+    j++;
+    if (j == 10) j = 11;
+  }
+  for (int i = 0; i < 60; i+=15) {
+    radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
+    x = round(CENTRE_X + 210 * cos(radians));
+    y = round(CENTRE_Y - 191 * sin(radians));
+    gfx.fillCircle(x,y, 8, myCOLOR[Valm%7]);
+  }
+  for (int i = 0; i < 60; i++) {
+    radians = (90.0F - (i * 6.0F)) * M_PI / 180.0;
+    x = round(CENTRE_X + 210 * cos(radians));
+    y = round(CENTRE_Y - 191 * sin(radians));
+    gfx.fillCircle(x,y, 3, myCOLOR[6-Valm%7]);
+  }
 }
 
-void drawDate()
-{
-            int Vals = rtc.second;
-            int dig1 = Vals / 10;
-            int dig2 = Vals - (dig1 * 10);
-            effects.DisplayNumber(dig1, x4, y4, 10, 5, hueva);
-            effects.DisplayNumber(dig2, x4+35, y4, 10, 5, hueva);
+void drawSed() {
+  vga.fillRect(495, y1-5, 65, 52, vga.RGB(0));
+  int dig1 = Vals / 10;
+  int dig2 = Vals - (dig1 * 10);
+  effects.DisplayNumber(dig1, 500, y1, 10, 5, hueva++);
+  effects.DisplayNumber(dig2, 533, y1, 10, 5, hueva++);
 }
-void drawTempHumi()
-{
-            gfx.setFont(&atawi19x11c);
-            gfx.setTextSize(3);
-            gfx.setTextColor(myCOLOR[ac]);
-            gfx.setCursor(0,5);
-            gfx.print(Temp);
-            gfx.setTextSize(2);
-            gfx.setTextColor(myCOLOR[4]);
-            gfx.print(" *");
-            gfx.setTextSize(3);
-            gfx.setTextColor(myCOLOR[cc]);
-            gfx.setCursor(0,335);
-            gfx.print(Humi);
-            gfx.setTextColor(myCOLOR[0]);
-            gfx.print(" %");
-            gfx.setFont();
+void drawTempHumi() {
+  gfx.setFont(&atawi11x7g);
+  gfx.setTextSize(4);
+  gfx.setTextColor(myCOLOR[random(0, 6)]);
+  gfx.setCursor(500,y2);
+  vga.fillRect(495, y2, 65, 52, vga.RGB(0));
+  gfx.print(rtc.getAmPm());
+  gfx.setFont();
+  gfx.setFont(&atawi19x11c);
+  gfx.setTextSize(3);
+  gfx.setTextColor(myCOLOR[ac]);
+  gfx.setCursor(0,5);
+  vga.fillRect(0, 5, 200, 57, vga.RGB(0));
+  gfx.print(Temp);
+  gfx.setTextSize(2);
+  gfx.setTextColor(myCOLOR[4]);
+  gfx.print(" *");
+  gfx.setTextSize(3);
+  gfx.setTextColor(myCOLOR[cc]);
+  gfx.setCursor(0,335);
+  vga.fillRect(0, 335, 200, 57, vga.RGB(0));
+  gfx.print(Humi);
+  gfx.setTextColor(myCOLOR[0]);
+  gfx.print(" %");
+  gfx.setFont();
+}
+void drawdigi() {
+  vga.fillRect(337, y0+15, 6, 27, vga.RGB(0));
+  gfx.setFont(&atawi19x11c);
+  gfx.setTextSize(3);
+  gfx.setTextColor(myCOLOR[Valm%7]);
+  gfx.setCursor(265,y0);
+  text = Mode24h ? flasher ? rtc.getTime("%H:%M") : rtc.getTime("%H %M") : flasher ? rtc.getTime("%I:%M") : rtc.getTime("%I %M");
+  gfx.print(text);
+  gfx.setFont(&atawi11x7g);
+  gfx.setTextSize(2);
+  gfx.setCursor(246,y0+55);
+  gfx.setTextColor(myCOLOR[(Valm+5)%7]);
+  text = effects.getfullDateMesg(fon);
+  gfx.print(text);
+  gfx.setFont();
   }
-void drawMesg()
-{
-    uint16_t text_length = textmsg.length() * 21; 
-    canvasM.fillScreen(0);
-    canvasM.setFont(&atawi11x7g);
-    canvasM.setTextSize(3);
-    canvasM.setCursor(xps, 0);
-    canvasM.print(textmsg);
-    canvasM.setFont();
-     xps-=sp0;
-     if (xps < -text_length) 
-     { xps = 300;
-     effects.getmesg(); }
-  }
-void getSyTemp()
-{
+void getSyTemp() {
   int xs=15, ys=90;
- vga.setTextColor(vga.RGB(0xffff00));
+  vga.setTextColor(vga.RGB(0xffff00));
   vga.setFont(Font8x8);
-  for(int x=ys+30; x<ys+171; x+=20) {
-  vga.fillRect(xs+34, x, 6, 1, vga.RGB(0xff00ff));
-  vga.setCursor(xs+45, x-3);
-  vga.print((ys+130-x)/2);
+  for(int y=ys+30; y<ys+171; y+=20) {
+  vga.fillRect(xs+34, y, 6, 1, vga.RGB(0xff00ff));
+  vga.setCursor(xs+45, y-3);
+  vga.print((ys+130-y)/2);
   }
   vga.fillRect(xs+16, ys+10, 18, 180, vga.RGB(0xff00ff));
   vga.fillEllipse(xs+25, ys, 10, 20, vga.RGB(0xff00ff));
