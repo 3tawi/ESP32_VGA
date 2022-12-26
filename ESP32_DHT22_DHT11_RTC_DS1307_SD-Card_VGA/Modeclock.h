@@ -4,18 +4,17 @@
 #ifndef Modeclock_H
 #define Modeclock_H
 
-
-#include "AnalogClock.h"
 #include "DigitalClock.h"
+#include "AnalogClock.h"
 #include "SegmentClock.h"
-#include "SettingClock.h"
+//#include "SettingClock.h"
+
 
 class Modeclock : public list {
   private:
-    AnalogClock analogClock;
     DigitalClock digitalClock;
     SegmentClock segmentClock;
-    SettingClock settingClock;
+    AnalogClock analogClock;
 
     int currentIndex = 0;
     Play* currentItem;
@@ -23,14 +22,13 @@ class Modeclock : public list {
     int getCurrentIndex() {
       return currentIndex;
     }
-
-    static const int Modenm = 4;
+    static const int Modenm = 3;
     Play* items[Modenm] = {
-      &digitalClock,
       &analogClock,
       &segmentClock,
-      &settingClock
+      &digitalClock
     };
+    
 
   
   public:
@@ -48,13 +46,8 @@ class Modeclock : public list {
 
     void move(int step) {
       currentIndex += step;
-    if (modeS) {
       if (currentIndex >= Modenm) currentIndex = 0;
       else if (currentIndex < 0) currentIndex = Modenm - 1;
-      } else {
-      if (currentIndex >= Modenm -1) currentIndex = 0;
-      else if (currentIndex < 0) currentIndex = Modenm - 2;
-      }
       moveTo(currentIndex);
     }
 
