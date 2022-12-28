@@ -35,7 +35,6 @@ public:
     }
 
     unsigned int playframe() {
-    server.handleClient();
     drawMesg();
     effects.printCanva(0, 0, 505, 77, 0, 0);
     if ( (millis() - currentTime) > 1000 ) { 
@@ -44,7 +43,8 @@ public:
       hueColor++;
       currentTime = millis();
     }
-        return 0;
+    if (modewi) server.handleClient();
+    return 0;
     }
        
 void drawTime() {
