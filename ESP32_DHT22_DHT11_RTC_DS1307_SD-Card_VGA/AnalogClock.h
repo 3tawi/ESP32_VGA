@@ -56,7 +56,6 @@ public:
   }
 
   unsigned int playframe() {
-    if (modewi) server.handleClient();
     if ( (millis() - currentTime) > 1000 ) {
       drawTime();
       drawSed();
@@ -72,6 +71,7 @@ public:
       drawTime();
       NewRTCm = Valm;
     }
+    if (modewi) server.handleClient();
     return 0;
     }
 
