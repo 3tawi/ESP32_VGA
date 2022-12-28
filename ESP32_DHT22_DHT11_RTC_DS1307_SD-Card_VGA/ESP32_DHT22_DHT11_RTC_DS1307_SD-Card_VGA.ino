@@ -123,10 +123,11 @@ void setup() {
 void loop() {
     Mode.playframe();
     if (ModeAuto  &&  (millis() - lastTime > (sp1*maxTime))) { 
-      vga.clear(0);
       Mode.stop(); 
-      Mode.setModeclock(Ci);
-      Mode.start();  
+      Mode.move(1);
+      Mode.start(); 
+      vga.clear(0);
+      Ci = Mode.getModeIndex(); 
       NewRTCm = 60;
       lastTime = millis();
     }
@@ -178,17 +179,24 @@ void handleModePat() {
   wifi.handleRoot();
   Ci = server.arg("Pattern").toInt();
   Ci -= 1;
-  lastTime = 0; 
+  Mode.stop();
+  Mode.setModeclock(Ci);
+  Mode.start();
+  vga.clear(0);  
 }
 void handleModeNex() {
   wifi.handleRoot();
+  Mode.stop(); 
   Mode.move(1);
-  Ci = Mode.getModeIndex(); 
-  lastTime = 0; 
+  Mode.start();
+  vga.clear(0);  
+  Ci = Mode.getModeIndex();
 }
 void handleModePre() {
   wifi.handleRoot();
+  Mode.stop();
   Mode.move(-1);
+  Mode.start();
+  vga.clear(0);  
   Ci = Mode.getModeIndex();
-  lastTime = 0; 
 }
