@@ -8,6 +8,28 @@
   
 
 class Effects {
+
+private:
+const String MonthtostrFullEN[12] ={"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November" , "December"};
+const String MonthtostrEN[12]     ={"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+const String daytostrFullEN[7]    ={"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+const String daytostrEN[7]        ={"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+const String MonthtostrFullFR[12] ={"Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"};
+const String MonthtostrFR[12]     ={"Jan", "Fév", "Mar", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Déc"};
+const String daytostrFullFR[7]    ={"Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"};
+const String daytostrFR[7]        ={"Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"} ; 
+
+const String MonthtostrFullGR[12] ={"Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"};
+const String MonthtostrGR[12]     ={"Jan", "Feb", "März", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"};
+const String daytostrFullGR[7]    ={"Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"};
+const String daytostrGR[7]        ={"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}; 
+
+const String MonthtostrFullES[12] ={"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+const String MonthtostrES[12]     ={"Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"};
+const String daytostrFullES[7]    ={"Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"};
+const String daytostrES[7]        ={"Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"}; 
+
 public:
   
 
@@ -53,24 +75,6 @@ void DisplayNumber(int xval, int xs, int ys, int hs, int ws, long cs) {
   if(xval != 0 && xval != 1 && xval != 7)              { Displaysegment(6, xs, ys, hs, ws, cs+(xval*200)); }         // g
 }
   
- void drawCanva(int xx0, int yy0, int xx1, int yy1, int xx2, int yy2) {
-  dx = (int)(sin(xps) * 32);
-  dy  = (int)(cos(xps) * 16);
-  for(int x=xx0; x < xx1; x++) {
-    for(int y=yy0; y < yy1; y++) {
-  int c0 = canvasM.getPixel(x, y);
-  if (c0 != 0) {
-  value = valhue
-  + (uint8_t)((dx * dx + dy * dy) << 2);
-    vga.dotFast(x+xx2, y+yy2, ColorHue(value)); 
-    }
-    dy--;
-    }
-    dx--;
-   valhue-=3;
-  }
-  }
-  
  void printCanva(int xx0, int yy0, int xx1, int yy1, int xx2, int yy2) {
   dx = (int)(sin(xps) * 32);
   dy  = (int)(cos(xps) * 16);
@@ -98,21 +102,21 @@ void DisplayNumber(int xval, int xs, int ys, int hs, int ws, long cs) {
     
   void redtemphumi() {
   sensor.read();
-  if (Temp != NewTemp || Humi != NewHumi) {
-  Temp = NewTemp;
-  Humi = NewHumi;
-  wirttemphu();
-  if      (Humi<20) { cc = 4; }
-  else if (Humi<30) { cc = 3; }
-  else if (Humi<60) { cc = 2; }
-  else if (Humi<70) { cc = 1; }
-  else              { cc = 0; }
-  
-  if      (Temp<15) { ac = 0; }
-  else if (Temp<20) { ac = 1; }
-  else if (Temp<30) { ac = 2; }
-  else if (Temp<36) { ac = 3; }
-  else              { ac = 4; }
+  if (NewTemp != Temp || NewHumi != Humi) {
+    if      (NewHumi<20) { cc = 4; }
+    else if (NewHumi<30) { cc = 3; }
+    else if (NewHumi<60) { cc = 2; }
+    else if (NewHumi<70) { cc = 1; }
+    else              { cc = 0; }
+    if      (NewTemp<15) { ac = 0; }
+    else if (NewTemp<20) { ac = 1; }
+    else if (NewTemp<30) { ac = 2; }
+    else if (NewTemp<36) { ac = 3; }
+    else              { ac = 4; }
+    wirttemphu();
+    Temp = NewTemp;
+    Humi = NewHumi;
+    NewRTCm = 60;
   }
 }
 void wirttemphu() {
@@ -121,11 +125,11 @@ void wirttemphu() {
     ddate += ".txt";
     text = rtc.getTime();
     text += " ";
-    text += "Temperature: ";
-    text += Temp;
+    text += strtemp;
+    text += NewTemp;
     text += " *C ";
-    text += "Humidity: ";
-    text += Humi;
+    text += strhumi;
+    text += NewHumi;
     text += " %RH";
     text = text;
     writeFileSD(ddate, text);
@@ -210,7 +214,7 @@ int gtchar(char source1) {
   int so1 = source1;
     return (so1);
 }
-String printTextMesg(String source) {
+String TraTextMesg(String source) {
   int so;
   String sour="";
   int k = source.length();
@@ -225,37 +229,254 @@ String printTextMesg(String source) {
     }
     return (sour);
   }
+  
+String getfullDateMesg(int fo, bool mod = false) {
+  char s[51];
+  switch(fo) {
+    case 0 :
+      if (mod) {
+        sprintf(s, "%s, %s, %02d %s %04d", rtc.getAmPm(), daytostrFullEN[rtc.getDayofWeek()], rtc.getDay(), MonthtostrFullEN[rtc.getMonth()], rtc.getYear()); }
+      else {
+        sprintf(s, "%s, %02d %s %04d", daytostrEN[rtc.getDayofWeek()], rtc.getDay(), MonthtostrEN[rtc.getMonth()], rtc.getYear()); }
+      break;
+    case 1 :
+      if (mod) {
+        sprintf(s, "%s, %s, %02d %s %04d", rtc.getAmPm(), daytostrFullFR[rtc.getDayofWeek()], rtc.getDay(), MonthtostrFullFR[rtc.getMonth()], rtc.getYear()); }
+      else {
+        sprintf(s, "%s, %02d %s %04d", daytostrFR[rtc.getDayofWeek()], rtc.getDay(), MonthtostrFR[rtc.getMonth()], rtc.getYear()); }
+      break;
+    case 2 :
+      if (mod) {
+        sprintf(s, "%s, %s, %02d %s %04d", rtc.getAmPm(), daytostrFullGR[rtc.getDayofWeek()], rtc.getDay(), MonthtostrFullGR[rtc.getMonth()], rtc.getYear()); }
+      else {
+        sprintf(s, "%s, %02d %s %04d", daytostrGR[rtc.getDayofWeek()], rtc.getDay(), MonthtostrGR[rtc.getMonth()], rtc.getYear()); }
+      break;
+    case 3 :
+      if (mod) {
+        sprintf(s, "%s, %s, %02d %s %04d", rtc.getAmPm(), daytostrFullES[rtc.getDayofWeek()], rtc.getDay(), MonthtostrFullES[rtc.getMonth()], rtc.getYear()); }
+      else {
+        sprintf(s, "%s, %02d %s %04d", daytostrES[rtc.getDayofWeek()], rtc.getDay(), MonthtostrES[rtc.getMonth()], rtc.getYear()); }
+      break;
+    }
+  if (fo == 0) return String(s);
+  return TraTextMesg(String(s));
+}
+  
 void getmesg()
 {
-    switch(msg)
-    {
+  xps = 490;
+  switch(msg) {
     case 0 :
         textmsg = Message;
         msg++;
         break;
     case 1 :
         redtemphumi();
-        textmsg = "Temperature: ";
-        textmsg += Temp;
+        textmsg = strtemp;
+        textmsg += NewTemp;
         textmsg += (char)(1);
         msg++;
         break;
     case 2 :
-        textmsg = "Humidity: ";
-        textmsg += Humi;
+        textmsg = strhumi;
+        textmsg += NewHumi;
         textmsg += " %";
         msg++;
         break;
     case 3 :
-        textmsg = rtc.getDate(true);
+        textmsg = getfullDateMesg(fon, true);
         msg = 0;
         break;
     case 4 :
+        textmsg = "Hello!";
+        msg = 5;
+        break;
+    case 5 :
         textmsg = textip;
         msg = 0;
         break;
     }
 }
+
+void readSttWifi() {
+  File file = SPIFFS.open("/Stt-wifi.txt");
+  if(file) {
+    String textwifi = "";
+    while (file.available()) {
+      int savednum = file.read();
+      textwifi += (char)savednum;
+     }
+    file.close();
+    readsource(textwifi);
+  }
+}
+
+void readSttspeed() {
+  File file = SPIFFS.open("/Sttingsp.txt");
+  if(file) {
+    String text = "";
+    while (file.available()) {
+      int savednum = file.read();
+      text += (char)savednum;
+     }
+    file.close();
+    readsource(text);
+  } else {
+    Ci  = 0;
+    Tz  = 1;
+    sp0 = 12;
+    sp1 = 10;
+    maxTime = 60000;
+    ModeAuto  = true;
+    Mode24h = true;
+  }
+}
+
+void readsource(String source) {
+  String line = "";
+  int k = source.length();
+  for(int j=0; j<k; j++) {
+    if (source[j] == '\n') {
+      readLine(line);
+      line = "";
+      } else
+    line += source[j];
+  }
+}
+void readLine(String Line) {
+        Serial.println(Line);
+      if (Line.startsWith("speed0=")) {
+        Line = Line.substring(7);
+        if (Line.length() > 0) {
+          sp0 = Line.toInt();
+        }
+        Serial.println(sp0);
+      }
+      else if (Line.startsWith("speed1=")) {
+        Line = Line.substring(7);
+        if (Line.length() > 0) {
+          sp1 = Line.toInt();
+        }
+        Serial.println(sp1);
+      }
+      else if (Line.startsWith("Cindex=")) {
+        Line = Line.substring(7);
+        if (Line.length() > 0) {
+          Ci = Line.toInt();
+        }
+        Serial.println(Ci);
+      }
+      else if (Line.startsWith("mAuto=")) {
+        Line = Line.substring(6);
+        if (Line.length() > 0) {
+          ModeAuto = Line.toInt();
+        }
+        Serial.println(ModeAuto);
+      }
+      else if (Line.startsWith("m24h=")) {
+        Line = Line.substring(5);
+        if (Line.length() > 0) {
+          Mode24h = Line.toInt();
+        }
+        Serial.println(ModeAuto);
+      }
+      else if (Line.startsWith("mymsge=")) {
+        Line = Line.substring(7);
+        if (Line.length() > 0) {
+          Message = Line;
+        }
+        Serial.println(Message);
+      }
+      else if (Line.startsWith("Ssid=")) {
+        Line = Line.substring(5);
+        if (Line.length() > 0) {
+          Ssid = Line;
+        }
+        Serial.println(Ssid);
+      }
+      else if (Line.startsWith("Pass=")) {
+        Line = Line.substring(5);
+        if (Line.length() > 0) {
+          Pass = Line;
+        }
+        Serial.println(Pass);
+      }
+      else if (Line.startsWith("Wifis=")) {
+        Line = Line.substring(6);
+        if (Line.length() > 0) {
+          wifiok = Line.toInt();
+        }
+        Serial.println(wifiok);
+      }
+      else if (Line.startsWith("Lang=")) {
+        Line = Line.substring(5);
+        if (Line.length() > 0) {
+          fon = Line.toInt();
+        }
+        Serial.println(fon);
+      }
+  }
+
+void handleSave() {
+   Savewifi();
+   SaveStting();
+   writeTime();
+}
+  
+void Savewifi() {
+    File file = SPIFFS.open("/Stt-wifi.txt", FILE_WRITE);
+    if (file) {
+      String textw =  "\n";
+             textw += "Ssid=";
+             textw += Ssid;
+             textw += "\nPass=";
+             textw += Pass;
+             textw += "\nWifis=";
+             textw += wifiok;
+             textw += "\n";
+      file.print(textw);
+      file.close();
+      Serial.println(textw);
+    }
+}
+  
+void SaveStting() {
+    File file = SPIFFS.open("/Sttingsp.txt", FILE_WRITE);
+    if (file) {
+      String text =  "speed0=";
+             text += sp0;
+             text += "\nspeed1=";
+             text += sp1;
+             text += "\nCindex=";
+             text += Ci;
+             text += "\nmAuto=";
+             text += ModeAuto;
+             text += "\nm24h=";
+             text += Mode24h;
+             text += "\nmymsge=";
+             text += Message;
+             text += "\nLang=";
+             text += fon;
+             text += "\n";
+      file.print(text);
+      file.close();
+      Serial.println(text);
+    }
+}
+
+void prepacard() { 
+    File root = SD.open("/Temhumi");
+    if(!root.isDirectory()){
+        SD.mkdir("/Temhumi");
+    }
+}
+
+void updateTime()
+{
+  rtc.DSgetdatime(); 
+  configTime(Tz * 3600, 0, "", "");
+} 
+  
 void writeTime()
 {
   configTime(0, 0, "", ""); 

@@ -76,6 +76,7 @@ void drawTimese() {
     
 void drawTimehm() {
    int Valh = Mode24h ? rtc.getHour(true) : rtc.getHour();
+   if (Valh == 0 && !Mode24h) Valh = 12;
    int Valm = rtc.getMinute();
    int dig1 = Valh / 10;
    int dig2 = Valh - (dig1 * 10);
@@ -94,14 +95,14 @@ void drawTemphu() {
    gfx.setTextSize(4);
    gfx.setTextColor(myCOLOR[ac]);
    gfx.setCursor(5,320);
-   gfx.print(Temp);
+   gfx.print(NewTemp);
    gfx.setTextSize(2);
    gfx.setTextColor(myCOLOR[4]);
    gfx.print(" *");
    gfx.setTextSize(4);
    gfx.setTextColor(myCOLOR[cc]);
    gfx.setCursor(290,320);
-   gfx.print(Humi);
+   gfx.print(NewHumi);
    gfx.setTextColor(myCOLOR[0]);
    gfx.print(" %");
    getSyTemp();
@@ -156,7 +157,7 @@ void getSyTemp() {
   vga.fillRect(xs+19, ys, 2, 120, vga.RGB(0xffffff));
   vga.fillRect(xs+30, ys, 2, 120, vga.RGB(0xffffff));
   vga.fillRect(xs+32, ys, 2, 118, vga.RGB(0xff00ff));
-  int tec = map(Temp, 0, 50, ys+100, ys);
+  int tec = map(NewTemp, 0, 50, ys+100, ys);
   int yec = ys+136-tec;
   vga.fillRect(xs+21, ys, 9, 130, vga.RGB(0));
   vga.fillRect(xs+21, tec, 9, yec, vga.RGB(0x0000ff));

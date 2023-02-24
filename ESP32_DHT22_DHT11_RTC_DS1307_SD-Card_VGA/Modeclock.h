@@ -4,16 +4,17 @@
 #ifndef Modeclock_H
 #define Modeclock_H
 
+#include "DigitalClock.h"
 #include "AnalogClock.h"
 #include "SegmentClock.h"
-#include "SettingClock.h"
+//#include "SettingClock.h"
 
 
 class Modeclock : public list {
   private:
-    AnalogClock analogClock;
+    DigitalClock digitalClock;
     SegmentClock segmentClock;
-    SettingClock settingClock;
+    AnalogClock analogClock;
 
     int currentIndex = 0;
     Play* currentItem;
@@ -23,9 +24,9 @@ class Modeclock : public list {
     }
     static const int Modenm = 3;
     Play* items[Modenm] = {
-      &settingClock,
       &analogClock,
-      &segmentClock
+      &segmentClock,
+      &digitalClock
     };
     
 

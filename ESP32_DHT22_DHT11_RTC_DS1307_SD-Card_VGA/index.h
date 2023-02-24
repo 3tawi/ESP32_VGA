@@ -18,6 +18,8 @@ const char MAIN_page[] PROGMEM = R"=====(
     var cival;
     var h24val;
     var amval;
+    var lng;
+    const lang_font = ["EN", "FR", "GR", "ES"];
     const mode24h = ["12h", "24h"];
     const amvalarr = ["Manual", "Auto"];
     const weekday = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -29,6 +31,13 @@ function DisplayCurrentTime() {
   var ti = dt.toLocaleTimeString(true);
   document.getElementById("datetime").innerHTML = (dow + " " + da + " " + ti);
         setTimeout('DisplayCurrentTime()', 1000);
+}
+function myFunctionlng() {
+  var strLine = "langue";
+  var request = new XMLHttpRequest();
+  request.open("GET", strLine, false);
+  request.send(null);
+  GetArduinodata();
 }
 function myFunction24h() {
   var strLine = "mode24h";
@@ -82,25 +91,8 @@ function myFunctionS1() {
   request.send(null);
   GetArduinodata();
 }
-function myFunctionS2() {
-  var n = document.getElementById("mySpeed2");
-  var strLine = "mySpeed2?Speed2=" + n.value;
-  var request = new XMLHttpRequest();
-  request.open("GET", strLine, false);
-  request.send(null);
-  GetArduinodata();
-}
-function myFunctionS3() {
-  var n = document.getElementById("mySpeed3");
-  var strLine = "mySpeed3?Speed3=" + n.value;
-  var request = new XMLHttpRequest();
-  request.open("GET", strLine, false);
-  request.send(null);
-  GetArduinodata();
-}
-function myFunctionS4() {
-  var n = document.getElementById("mySpeed4");
-  var strLine = "mySpeed4?Speed4=" + n.value;
+function myFunctionSav() {
+  var strLine = "modesave";
   var request = new XMLHttpRequest();
   request.open("GET", strLine, false);
   request.send(null);
@@ -160,9 +152,10 @@ function GetArduinodata() {
             h24val    = this.responseXML.getElementsByTagName('analog')[5].childNodes[0].nodeValue;
             spee0     = this.responseXML.getElementsByTagName('analog')[6].childNodes[0].nodeValue;
             spee1     = this.responseXML.getElementsByTagName('analog')[7].childNodes[0].nodeValue;
+            lng       = this.responseXML.getElementsByTagName('analog')[8].childNodes[0].nodeValue;
     }
     document.getElementById("Sped0").innerHTML = spee0;
-    document.getElementById("Sped1").innerHTML = spee1 + "s";
+    document.getElementById("Sped1").innerHTML = spee1 + "min";
     if(tz_val<0) { document.getElementById("TZmesg").innerHTML = "GMT" + tz_val; }
     else { document.getElementById("TZmesg").innerHTML = "GMT+" + tz_val; }
     var codeBlock1 = '<h1>' + temp_val + ' &degC</h1>';
@@ -170,6 +163,7 @@ function GetArduinodata() {
     document.getElementById("cimesg").innerHTML = "Mode " + cival;
     document.getElementById("ammesg").innerHTML = amvalarr[amval];
     document.getElementById("m24h").innerHTML = mode24h[h24val];
+    document.getElementById("fontmesg").innerHTML = lang_font[lng];
     document.getElementById("Temp").innerHTML = codeBlock1;
     document.getElementById("Humi").innerHTML = codeBlock2;
     var elem = document.getElementById("Humi");
@@ -357,7 +351,8 @@ button:hover {
        <table>
          <form action="/" method="POST">
             <td style="width:16%">
-                <b class="button-blue" style="width:98%"><span id="TZmesg"></span></b></td>
+                <button class="button-blue" onclick="myFunctionSav()" style="width:96%">&laquo; Save &raquo;</span></button>
+            </td>
             <td style="width:16%">
                 <button class="button-blue" style="width:98%" onclick="myFunction24h()"><span id="m24h"></span></button></td>
             <td style="width:32%">
@@ -419,19 +414,22 @@ window.onclick = function(event) {
      <div class="data-input">
         <table>
          <form action="/" method="POST">
-            <td style="width:22">
-                
-                <input type="number" name="Pattern" min="1" max="25" value="10" class="button-blue" style="width:30%" id="Modepat">
+            <td style="width:10%">
+                <b class="button-blue" onclick="myFunctionlng()" style="width:98%"><span id="fontmesg"></span></b></td>
+            <td style="width:16%">
+                <b class="button-blue" style="width:98%"><span id="TZmesg"></span></b></td>
+            <td style="width:16%">
+                <b class="button-blue" style="width:98%"><span id="cimesg"></span></b></td>
+            <td style="width:20">
+                <input type="number" name="Pattern" min="1" max="3" value="1" class="button-blue" style="width:30%" id="Modepat">
                 <button class="button-blue" onclick="myFunctionPatt()" style="width:50%">Set Mode</button>
             </td>
-            <td style="width:25%">
+            <td style="width:18%">
                 <button class="button-blue" onclick="myFunctionPre()" style="width:96%">&laquo; Previous</span></button>
             </td>
-            <td style="width:25%">
+            <td style="width:18%">
                 <button class="button-blue" onclick="myFunctionNex()" style="width:96%">Next &raquo;</span></button>
             </td>
-            <td style="width:28%">
-                <b class="button-blue" style="width:98%"><span id="cimesg"></span></b></td>
          </form>
         </table>
     </div>
@@ -451,7 +449,7 @@ window.onclick = function(event) {
          <form action="/" method="POST">
         <div class="data-input">
         <b> <span id="speed0"></span></b>
-        <input style="width:58%" type="range" name="Speed0" min="0" max="100" value="33" class="slider" id="mySpeed0">
+        <input style="width:58%" type="range" name="Speed0" min="1" max="24" value="6" class="slider" id="mySpeed0">
         <button class="button-blue" onclick="myFunctionS0()" style="width:20%"><b><span>Frame</span></b></button>
         <b class="button-blue" style="width:14%"><span id="Sped0"></span></b>
             <script>
@@ -472,7 +470,7 @@ slider0.oninput = function() {
          <form action="/" method="POST">
         <div class="data-input">
         <b> <span id="speed1"></span></b>
-        <input style="width:58%" type="range" name="Speed1" min="1" max="4" value="1" class="slider" id="mySpeed1">
+        <input style="width:58%" type="range" name="Speed1" min="1" max="60" value="10" class="slider" id="mySpeed1">
         <button class="button-blue" onclick="myFunctionS1()" style="width:20%"><b><span>Speed</span></b></button>
         <b class="button-blue" style="width:14%"><span id="Sped1"></span></b>
             <script>
